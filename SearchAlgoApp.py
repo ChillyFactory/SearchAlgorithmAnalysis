@@ -1,12 +1,11 @@
 import random
 import time
 import pandas as pd
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import sys
 import psutil, os
 
-
-sys.setrecursionlimit(10**5)  # Increase the recursion limit
+sys.setrecursionlimit(10**8)  # Increase the recursion limit
 
 # Common target for testing
 TARGET = 5000
@@ -65,7 +64,6 @@ class RBNode:
         self.left = left or None
         self.right = right or None
         self.parent = parent
-
 
 class RedBlackTree:
     def __init__(self):
@@ -171,7 +169,6 @@ class RedBlackTree:
         left_child.right = node
         node.parent = left_child
 
-    
 def generate_data(size):
     data = random.sample(range(size * 10), size)
     return data
@@ -180,9 +177,8 @@ def print_memory_usage():
     process = psutil.Process(os.getpid())
     return f"Memory usage: {process.memory_info().rss / 1024**2:.2f} MB"
 
-
 def benchmark_search_methods():
-    data_sizes = [100, 10**3, 10**4]
+    data_sizes = [100, 10**3, 10**4, 10**5]
     results = []
 
     for size in data_sizes:
@@ -190,15 +186,15 @@ def benchmark_search_methods():
         sorted_data = sorted(data)
 
         # Linear Search
-        start = time.time()
+        start = time.perf_counter()
         linear_search(data, TARGET)
-        linear_time = time.time() - start
+        linear_time = (time.perf_counter() - start) * 1e3
         print(f"Data size: {len(data)} | Linear Search Complete | {print_memory_usage()}")
 
         # Binary Search
-        start = time.time()
+        start = time.perf_counter()
         binary_search(sorted_data, TARGET)
-        binary_time = time.time() - start
+        binary_time = (time.perf_counter() - start) * 1e3
         print(f"Data size: {len(data)} | Binary Search Complete | {print_memory_usage()}")
 
         # Binary Search Tree
@@ -206,21 +202,21 @@ def benchmark_search_methods():
         root = None
         for num in sorted_data:
             root = bst.insert(root, num)
-        start = time.time()
+        start = time.perf_counter()
         bst.search(root, TARGET)
-        bst_time = time.time() - start
+        bst_time = (time.perf_counter() - start) * 1e3
         print(f"Data size: {len(data)} | Binary Search Tree Complete | {print_memory_usage()}")
 
         # Red-Black Tree
         rbt = RedBlackTree()
         for num in sorted_data:
             rbt.insert(num)
-        start = time.time()
+        start = time.perf_counter()
         try:
             rbt.search(TARGET)
         except KeyError:
             pass
-        rbt_time = time.time() - start
+        rbt_time = (time.perf_counter() - start) * 1e3
         print(f"Data size: {len(data)} | RB Tree Complete | {print_memory_usage()}")
 
         # Store results
@@ -232,8 +228,21 @@ def display_results():
     results = benchmark_search_methods()
     df = pd.DataFrame(results, columns=["Data Size", "Linear Search", "Binary Search", "BST Search", "RBT Search"])
     print(df)
-    df.plot(x="Data Size", y=["Linear Search", "Binary Search", "BST Search", "RBT Search"],
-             logx=True, logy=True, title="Search Time Comparison")
+
+    plt.figure(figsize=(10, 6))
+    for col in ['Linear Search', 'Binary Search', 'BST Search', 'RBT Search']:
+        plt.plot(df['Data Size'], df[col], marker='o', label=col)
+
+    plt.xlabel('Data Size')
+    plt.ylabel('Time (ms)')
+    plt.title('Search Algorithm Performance by Data Size')
+    plt.legend()
+    plt.grid(True)
+    plt.xscale('log')
+    plt.yscale('log') 
+    plt.tight_layout()
+
+    plt.show()
 
 if __name__ == "__main__":
     display_results()
